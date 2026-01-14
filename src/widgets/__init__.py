@@ -15,7 +15,8 @@ Example:
 """
 
 # Import all widgets to ensure they are registered
+from .news import get_news
 from .stock_chart import get_stock_chart
 from .stock_stats import get_stock_stats
 
-__all__ = ["get_stock_stats", "get_stock_chart"]
+__all__ = ["get_stock_stats", "get_stock_chart", "get_news"]

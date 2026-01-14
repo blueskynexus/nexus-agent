@@ -57,3 +57,25 @@ class VnxQuoteData(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+class NewsArticle(BaseModel):
+    """Response schema for CORE/NEWS dataset"""
+
+    datetime: int  # Epoch milliseconds
+    headline: str
+    summary: str | None = None
+    source: str | None = None
+    provider: str
+    symbol: str
+    uuid: str
+    url: str
+    qm_url: str | None = Field(alias="qmUrl", default=None)
+    image: str | None = None
+    image_url: str | None = Field(alias="imageUrl", default=None)
+    has_paywall: bool = Field(alias="hasPaywall", default=False)
+    lang: str | None = None
+    related: str | None = None
+
+    class Config:
+        populate_by_name = True
