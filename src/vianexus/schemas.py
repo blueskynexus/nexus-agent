@@ -80,6 +80,7 @@ class NewsArticle(BaseModel):
     class Config:
         populate_by_name = True
 
+
 class QuoteData(BaseModel):
     """Response schema for CORE/QUOTE dataset"""
 
