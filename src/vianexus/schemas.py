@@ -79,3 +79,15 @@ class NewsArticle(BaseModel):
 
     class Config:
         populate_by_name = True
+
+class QuoteData(BaseModel):
+    """Response schema for CORE/QUOTE dataset"""
+
+    symbol: str
+    price: float = Field(alias="latestPrice")
+    change: float = Field(alias="change")
+    percent_change: float = Field(alias="changePercent")
+    prev_close: float = Field(alias="previousClose")
+
+    class Config:
+        populate_by_name = True
