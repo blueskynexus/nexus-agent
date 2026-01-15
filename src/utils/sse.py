@@ -41,6 +41,37 @@ def extract_token(request: Request, query_token: str | None) -> str | None:
     return token or stored_token
 
 
+def get_extra_widget_data(widget_requests: list) -> dict:
+    """Create an SSE event to request data for extra widgets (uploaded files).
+
+    This is similar to get_widget_data but uses the 'get_extra_widget_data' function
+    which is used for widgets.extra (uploaded files, artifacts).
+
+    Args:
+        widget_requests: List of WidgetRequest objects containing widget and input_arguments
+
+    Returns:
+        SSE event dict ready to yield from a streaming response
+    """
+    data_sources = []
+    for widget_request in widget_requests:
+        data_sources.append(
+            {
+                "widget_uuid": str(widget_request.widget.uuid),
+                "origin": widget_request.widget.origin,
+                "id": widget_request.widget.widget_id,
+                "input_args": widget_request.input_arguments,
+            }
+        )
+
+    return FunctionCallSSE(
+        data=FunctionCallSSEData(
+            function="get_extra_widget_data",
+            input_arguments={"data_sources": data_sources},
+        )
+    ).model_dump(exclude_none=True)
+
+
 def add_widget_to_dashboard(
     origin: str,
     widget_id: str,

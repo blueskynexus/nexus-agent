@@ -27,6 +27,7 @@ from src.widgets.news import get_news
 from src.widgets.rules import get_rules
 from src.widgets.stock_chart import get_stock_chart
 from src.widgets.stock_stats import get_stock_stats
+from src.widgets.table import table_widget
 
 logger = logging.getLogger(__name__)
 
@@ -224,6 +225,7 @@ app.get("/stock_stats")(get_stock_stats)
 app.get("/moving_average_crossover")(get_stock_chart)
 app.get("/rules")(get_rules)
 app.get("/vianexus_news")(get_news)
+app.get("/table_widget")(table_widget)
 
 
 def run():

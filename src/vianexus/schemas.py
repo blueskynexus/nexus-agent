@@ -79,3 +79,21 @@ class NewsArticle(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+class QuoteData(BaseModel):
+    """Response schema for CORE/QUOTE dataset"""
+
+    symbol: str
+    price: float = Field(alias="latestPrice")
+    change: float = Field(alias="change")
+    percent_change: float = Field(alias="changePercent")
+    prev_close: float = Field(alias="previousClose")
+    open: float | None = Field(alias="open", default=None)
+    high: float | None = Field(alias="high", default=None)
+    low: float | None = Field(alias="low", default=None)
+    volume: int | None = Field(alias="volume", default=None)
+    market_cap: int | None = Field(alias="marketCap", default=None)
+
+    class Config:
+        populate_by_name = True

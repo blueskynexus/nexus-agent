@@ -10,7 +10,12 @@ from openbb_ai import table as openbb_table
 
 from src.agent.widget_discovery import fetch_available_widgets, format_widgets_list
 from src.config import FINANCIAL_AGENT_URL
-from src.utils.sse import add_widget_to_dashboard, sse_message_chunk, update_widget_in_dashboard
+from src.utils.sse import (
+    add_widget_to_dashboard,
+    get_extra_widget_data,
+    sse_message_chunk,
+    update_widget_in_dashboard,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -56,17 +61,40 @@ async def stream_response(
     # Phase 1: Check if we need to retrieve widget data first
     # When last message is "human" and widgets exist, tell OpenBB to fetch widget data
     last_message = query.messages[-1]
-    if last_message.role == "human" and query.widgets and query.widgets.primary:
-        logger.info("Phase 1: Requesting widget data retrieval")
-        widget_requests: list[WidgetRequest] = []
-        for widget in query.widgets.primary:
-            widget_requests.append(
-                WidgetRequest(
-                    widget=widget,
-                    input_arguments={param.name: param.current_value for param in widget.params},
+    has_primary_widgets = query.widgets and query.widgets.primary
+    has_extra_widgets = query.widgets and query.widgets.extra
+
+    if last_message.role == "human" and (has_primary_widgets or has_extra_widgets):
+        # Request data for primary widgets (dashboard widgets)
+        if has_primary_widgets:
+            logger.info("Phase 1: Requesting primary widget data retrieval")
+            widget_requests: list[WidgetRequest] = []
+            for widget in query.widgets.primary:
+                widget_requests.append(
+                    WidgetRequest(
+                        widget=widget,
+                        input_arguments={
+                            param.name: param.current_value for param in widget.params
+                        },
+                    )
                 )
-            )
-        yield get_widget_data(widget_requests).model_dump()
+            yield get_widget_data(widget_requests).model_dump()
+
+        # Request data for extra widgets (uploaded files)
+        if has_extra_widgets:
+            logger.info("Phase 1: Requesting extra widget data (uploaded files)")
+            extra_widget_requests: list[WidgetRequest] = []
+            for widget in query.widgets.extra:
+                extra_widget_requests.append(
+                    WidgetRequest(
+                        widget=widget,
+                        input_arguments={
+                            param.name: param.current_value for param in widget.params
+                        },
+                    )
+                )
+            yield get_extra_widget_data(extra_widget_requests)
+
         return
 
     # Phase 2: Extract widget data from tool messages and build citations
@@ -79,13 +107,42 @@ async def stream_response(
             logger.info("Phase 2: Processing tool message with widget data")
             # Build context from tool message data
             context_str = "Use the following data to answer the question:\n\n"
+
             for result in message.data:
                 # Skip results that don't have items (e.g., ClientCommandResult from widget updates)
                 if not hasattr(result, "items"):
                     continue
                 for item in result.items:
-                    context_str += f"{item.content}\n---\n"
-                    has_widget_data = True
+                    data_format = getattr(item, "data_format", None)
+
+                    # Log the data format for debugging
+                    if data_format:
+                        data_type = getattr(data_format, "data_type", "unknown")
+                        logger.info(f"Processing item with data_type: {data_type}")
+
+                    # Handle different item types:
+                    # - SingleDataContent has .content (base64 or raw string)
+                    # - SingleFileReference has .url (URL to fetch content from)
+                    if hasattr(item, "content"):
+                        content = item.content
+                        context_str += f"{content}\n---\n"
+                        has_widget_data = True
+                    elif hasattr(item, "url"):
+                        # SingleFileReference - fetch content from URL
+                        file_url = str(item.url)
+                        logger.info(f"Fetching file content from URL: {file_url}")
+                        try:
+                            async with httpx.AsyncClient() as client:
+                                response = await client.get(file_url)
+                                response.raise_for_status()
+                                file_content = response.text
+                                context_str += f"{file_content}\n---\n"
+                                has_widget_data = True
+                        except Exception as e:
+                            logger.error(f"Failed to fetch file from {file_url}: {e}")
+                            context_str += f"[Error fetching file: {e}]\n---\n"
+                    else:
+                        logger.warning(f"Unknown item type: {type(item)}")
 
             # If this is a callback from add_widget/update_widget (no actual data), return silently
             # The LLM already provided a response, so we don't need to yield anything
@@ -95,7 +152,7 @@ async def stream_response(
                 )
                 return
 
-            # Build citations from widget data
+            # Build citations from widget data (primary widgets)
             if query.widgets and query.widgets.primary:
                 for widget_data_request in message.input_arguments.get("data_sources", []):
                     filtered_widgets = list(
@@ -112,6 +169,33 @@ async def stream_response(
                                 extra_details=widget_data_request.get("input_args", {}),
                             )
                         )
+
+            # Build citations from uploaded files (extra widgets)
+            if query.widgets and query.widgets.extra:
+                for widget_data_request in message.input_arguments.get("data_sources", []):
+                    filtered_widgets = list(
+                        filter(
+                            lambda w: str(w.uuid) == widget_data_request["widget_uuid"],
+                            query.widgets.extra,
+                        )
+                    )
+                    if filtered_widgets:
+                        citations_list.append(
+                            cite(
+                                widget=filtered_widgets[0],
+                                input_arguments=widget_data_request.get("input_args", {}),
+                                extra_details={"source": "uploaded_file"},
+                            )
+                        )
+
+    # Add metadata for uploaded files
+    if query.widgets and query.widgets.extra:
+        file_metadata = "\n\n## Uploaded Files\n"
+        file_metadata += "The user has uploaded the following files for context:\n"
+        for widget in query.widgets.extra:
+            file_metadata += f"\n### {widget.name}\n"
+            file_metadata += f"- Description: {widget.description}\n"
+        context_str = file_metadata + "\n" + context_str
 
     # Add widget metadata so LLM knows UUIDs for update_widget tool
     if query.widgets and query.widgets.primary:
@@ -170,29 +254,54 @@ async def stream_response(
                 logger.info(f"Processing artifact: {artifact_type}")
 
                 if artifact_type == "chart":
-                    x_key = artifact.get("x_key", "x")
-                    y_keys = artifact.get("y_keys", ["y"])
+                    chart_type = artifact.get("chart_type", "line")
                     raw_data = artifact.get("data", [])
 
-                    # Filter data to only include xKey and yKey fields
-                    # This works around OpenBB dashboard not respecting chart_params.yKey
-                    keys_to_keep = {x_key} | set(y_keys)
-                    filtered_data = []
-                    for row in raw_data:
-                        filtered_row = {k: v for k, v in row.items() if k in keys_to_keep}
-                        # Convert timestamp to readable date if x_key looks like a timestamp
-                        if x_key in filtered_row:
-                            filtered_row[x_key] = format_timestamp_if_needed(filtered_row[x_key])
-                        filtered_data.append(filtered_row)
+                    # Pie and donut charts use different parameters than other chart types
+                    if chart_type in ("pie", "donut"):
+                        angle_key = artifact.get("angle_key", "value")
+                        callout_label_key = artifact.get("callout_label_key", "label")
 
-                    yield openbb_chart(
-                        type=artifact.get("chart_type", "line"),
-                        data=filtered_data,
-                        x_key=x_key,
-                        y_keys=y_keys,
-                        name=artifact.get("name", "Chart"),
-                        description=artifact.get("description", ""),
-                    ).model_dump()
+                        # Filter data to only include required fields
+                        keys_to_keep = {angle_key, callout_label_key}
+                        filtered_data = [
+                            {k: v for k, v in row.items() if k in keys_to_keep} for row in raw_data
+                        ]
+
+                        yield openbb_chart(
+                            type=chart_type,
+                            data=filtered_data,
+                            angle_key=angle_key,
+                            callout_label_key=callout_label_key,
+                            name=artifact.get("name", "Chart"),
+                            description=artifact.get("description", ""),
+                        ).model_dump()
+                    else:
+                        # Line, bar, scatter charts use x_key and y_keys
+                        x_key = artifact.get("x_key", "x")
+                        y_keys = artifact.get("y_keys", ["y"])
+
+                        # Filter data to only include xKey and yKey fields
+                        # This works around OpenBB dashboard not respecting chart_params.yKey
+                        keys_to_keep = {x_key} | set(y_keys)
+                        filtered_data = []
+                        for row in raw_data:
+                            filtered_row = {k: v for k, v in row.items() if k in keys_to_keep}
+                            # Convert timestamp to readable date if x_key looks like a timestamp
+                            if x_key in filtered_row:
+                                filtered_row[x_key] = format_timestamp_if_needed(
+                                    filtered_row[x_key]
+                                )
+                            filtered_data.append(filtered_row)
+
+                        yield openbb_chart(
+                            type=chart_type,
+                            data=filtered_data,
+                            x_key=x_key,
+                            y_keys=y_keys,
+                            name=artifact.get("name", "Chart"),
+                            description=artifact.get("description", ""),
+                        ).model_dump()
                 elif artifact_type == "table":
                     yield openbb_table(
                         data=artifact.get("data", []),

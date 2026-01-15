@@ -53,4 +53,3 @@ class News:
 
 
 news = News()
-
