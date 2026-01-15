@@ -4,25 +4,32 @@ This module provides both simple environment variable constants for the agent
 functionality and a Pydantic Settings class for widget functionality.
 """
 
-import os
-
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-FINANCIAL_AGENT_URL = os.getenv(
-    "FINANCIAL_AGENT_URL", "https://financial-chat-agent-857389207619.us-central1.run.app"
-)
-AGENT_NAME = os.getenv("AGENT_NAME", "viaNexus Financial Agent")
-AGENT_DESCRIPTION = os.getenv(
-    "AGENT_DESCRIPTION",
-    "A financial assistant powered by viaNexus with access to market data, "
-    "analytics, and visualization capabilities.",
-)
 WIDGET_ORIGIN = "viaNexus Widgets"
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables and .env file."""
+
+    # Agent configuration
+    financial_agent_url: str = Field(
+        default="https://financial-chat-agent-857389207619.us-central1.run.app",
+        validation_alias="FINANCIAL_AGENT_URL",
+        description="URL of the financial chat agent backend",
+    )
+    agent_name: str = Field(
+        default="viaNexus Financial Agent",
+        validation_alias="AGENT_NAME",
+        description="Display name for OpenBB agent discovery",
+    )
+    agent_description: str = Field(
+        default="A financial assistant powered by viaNexus with access to market data, "
+        "analytics, and visualization capabilities.",
+        validation_alias="AGENT_DESCRIPTION",
+        description="Agent description for OpenBB discovery",
+    )
 
     # Environment control
     environment: str = Field(
