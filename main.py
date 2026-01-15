@@ -83,7 +83,6 @@ async def get_agents_metadata() -> JSONResponse:
                     "streaming": True,
                     "widget-dashboard-select": True,
                     "widget-dashboard-search": True,
-                    "file-upload": True,
                 },
             }
         }

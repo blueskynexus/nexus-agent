@@ -9,11 +9,9 @@ import os
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# FINANCIAL_AGENT_URL = os.getenv(
-#     "FINANCIAL_AGENT_URL", "https://financial-chat-agent-857389207619.us-central1.run.app"
-# )
-
-FINANCIAL_AGENT_URL = os.getenv("FINANCIAL_AGENT_URL", "http://localhost:8501")
+FINANCIAL_AGENT_URL = os.getenv(
+    "FINANCIAL_AGENT_URL", "https://financial-chat-agent-857389207619.us-central1.run.app"
+)
 AGENT_NAME = os.getenv("AGENT_NAME", "viaNexus Financial Agent")
 AGENT_DESCRIPTION = os.getenv(
     "AGENT_DESCRIPTION",
