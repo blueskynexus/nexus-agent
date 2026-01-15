@@ -9,7 +9,7 @@ from src.vianexus.quote import quote
     "description": "A table widget from an API endpoint",
     "type": "table",
     "endpoint": "table_widget",
-    "refetchInterval": 60000,
+    "refetchInterval": 10_000,
     "gridData": {"w": 20, "h": 10},
     "raw": True,
     "params": [
@@ -46,6 +46,29 @@ from src.vianexus.quote import quote
                     "field": "prev_close",
                     "headerName": "Prev Close",
                 },
+                {
+                    "field": "open",
+                    "headerName": "Open",
+                    "hide": True, # Open price is returning null from API
+                },
+                {
+                    "field": "high",
+                    "headerName": "High",
+                },
+                {
+                    "field": "low",
+                    "headerName": "Low",
+                },
+                {
+                    "field": "volume",
+                    "headerName": "Volume",
+                    "formatterFn": "int",
+                },
+                {
+                    "field": "market_cap",
+                    "headerName": "Market Cap",
+                    "formatterFn": "int",
+                }
             ]
         }
     }
@@ -61,6 +84,11 @@ def table_widget(symbols: str = "NVDA,MSFT,AAPL,ORCL,PCG,QQQ"):
             "change": item.change,
             "percent_change": item.percent_change,
             "prev_close": item.prev_close,
+            "open": item.open,
+            "high": item.high,
+            "low": item.low,
+            "volume": item.volume,
+            "market_cap": item.market_cap,
         }
         for item in data
     ]
