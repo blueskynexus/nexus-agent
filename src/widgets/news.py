@@ -56,13 +56,14 @@ def format_body(summary: str | None, qm_url: str | None) -> str:
         "gridData": {"w": 40, "h": 20},
         "refetchInterval": 60000,
         "source": "viaNexus",
+        "raw": True,
         "params": [
             {
-                "paramName": "symbol",
-                "value": "AAPL",
-                "label": "Stock Symbol",
+                "paramName": "symbols",
+                "value": "AAPL,NVDA,MSFT",
+                "label": "Stock Symbols",
                 "type": "text",
-                "description": "Filter news by stock symbol (e.g., AAPL, MSFT, GOOGL).",
+                "description": "Filter news by stock symbols (e.g., AAPL, NVDA, MSFT).",
             },
             {
                 "paramName": "limit",
@@ -74,11 +75,11 @@ def format_body(summary: str | None, qm_url: str | None) -> str:
         ],
     }
 )
-def get_news(symbol: str = "AAPL", limit: int = 10):
+def get_news(symbols: str | None = None, limit: int = 10):
     """Fetch and return financial news articles.
 
     Args:
-        symbol: Optional stock symbol to filter news (e.g., "AAPL").
+        symbols: Optional stock symbols to filter news (e.g., "AAPL,NVDA,MSFT").
         limit: Maximum number of articles to display.
 
     Returns:
@@ -89,7 +90,7 @@ def get_news(symbol: str = "AAPL", limit: int = 10):
     """
     try:
         # Fetch news from API (pass None if symbol is empty)
-        articles = news.fetch(symbol=symbol if symbol else None, limit=limit)
+        articles = news.fetch(symbols=symbols.split(",") if symbols else None, limit=limit)
 
         # Transform to OpenBB newsfeed format
         result = []

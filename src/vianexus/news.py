@@ -19,7 +19,7 @@ class News:
         self.namespace = "CORE"
         self.dataset = "NEWS"
 
-    def fetch(self, symbol: str | None = None, limit: int = 10) -> list[NewsArticle]:
+    def fetch(self, symbols: list[str] | None = None, limit: int = 10) -> list[NewsArticle]:
         """Fetch news articles from the API.
 
         Args:
@@ -31,8 +31,8 @@ class News:
             List of validated NewsArticle objects.
         """
         # Build URL based on whether symbol is provided
-        if symbol:
-            url = f"{self.base_url}/data/{self.namespace}/{self.dataset}/{symbol.upper()}"
+        if symbols:
+            url = f"{self.base_url}/data/{self.namespace}/{self.dataset}/{','.join(symbols)}"
         else:
             url = f"{self.base_url}/data/{self.namespace}/{self.dataset}"
 
