@@ -97,3 +97,59 @@ class QuoteData(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+class AdvancedDividends(BaseModel):
+    """Response schema for advanced dividends dataset"""
+
+    # Required fields
+    symbol: str
+    refid: str
+    status: str
+
+    # Optional fields
+    adr_fee: float | None = Field(alias="adrFee", default=None)
+    amount: float | None = None
+    announce_date: str | None = Field(alias="announceDate", default=None)
+    country_code: str | None = Field(alias="countryCode", default=None)
+    coupon: float | None = None
+    created: str | None = None
+    currency: str | None = None
+    declared_currency_cd: str | None = Field(alias="declaredCurrencyCD", default=None)
+    declared_date: str | None = Field(alias="declaredDate", default=None)
+    declared_gross_amount: float | None = Field(alias="declaredGrossAmount", default=None)
+    description: str | None = None
+    ex_date: str | None = Field(alias="exDate", default=None)
+    figi: str | None = None
+    fiscal_year_end_date: str | None = Field(alias="fiscalYearEndDate", default=None)
+    flag: str | None = None
+    frequency: str | None = None
+    from_factor: float | None = Field(alias="fromFactor", default=None)
+    fx_date: str | None = Field(alias="fxDate", default=None)
+    gross_amount: float | None = Field(alias="grossAmount", default=None)
+    installment_pay_date: str | None = Field(alias="installmentPayDate", default=None)
+    is_approximate: bool | None = Field(alias="isApproximate", default=None)
+    is_capital_gains: bool | None = Field(alias="isCapitalGains", default=None)
+    is_dap: bool | None = Field(alias="isDAP", default=None)
+    is_net_investment_income: bool | None = Field(alias="isNetInvestmentIncome", default=None)
+    last_updated: str | None = Field(alias="lastUpdated", default=None)
+    marker: str | None = None
+    net_amount: float | None = Field(alias="netAmount", default=None)
+    notes: str | None = None
+    optional_election_date: str | None = Field(alias="optionalElectionDate", default=None)
+    par_value: float | None = Field(alias="parValue", default=None)
+    par_value_currency: str | None = Field(alias="parValueCurrency", default=None)
+    payment_date: str | None = Field(alias="paymentDate", default=None)
+    period_end_date: str | None = Field(alias="periodEndDate", default=None)
+    record_date: str | None = Field(alias="recordDate", default=None)
+    registration_date: str | None = Field(alias="registrationDate", default=None)
+    second_ex_date: str | None = Field(alias="secondExDate", default=None)
+    second_payment_date: str | None = Field(alias="secondPaymentDate", default=None)
+    security_type: str | None = Field(alias="securityType", default=None)
+    tax_rate: float | None = Field(alias="taxRate", default=None)
+    to_date: str | None = Field(alias="toDate", default=None)
+    to_factor: float | None = Field(alias="toFactor", default=None)
+    un_adjusted_amount: float | None = Field(alias="unAdjustedAmount", default=None)
+
+    class Config:
+        populate_by_name = True

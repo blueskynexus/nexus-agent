@@ -9,7 +9,7 @@ from openbb_ai import chart as openbb_chart
 from openbb_ai import table as openbb_table
 
 from src.agent.widget_discovery import fetch_available_widgets, format_widgets_list
-from src.config import FINANCIAL_AGENT_URL
+from src.config import settings
 from src.utils.sse import (
     add_widget_to_dashboard,
     get_extra_widget_data,
@@ -225,7 +225,7 @@ async def stream_response(
         request_body["widget_context"] = context_str
 
     # Build URL with query params
-    url = f"{FINANCIAL_AGENT_URL}/chat"
+    url = f"{settings.financial_agent_url}/chat"
     params = {"token": token}
     if session_id:
         params["session_id"] = session_id

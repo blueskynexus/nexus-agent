@@ -20,7 +20,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from registry import WIDGETS
 from src.agent.stream_response import stream_response
-from src.config import AGENT_DESCRIPTION, AGENT_NAME
+from src.config import settings
 from src.utils.logging import configure_logging
 from src.utils.sse import extract_token, sse_message_chunk
 from src.widgets.news import get_news
@@ -75,8 +75,8 @@ async def get_agents_metadata() -> JSONResponse:
     return JSONResponse(
         {
             "vianexus-financial-agent": {
-                "name": AGENT_NAME,
-                "description": AGENT_DESCRIPTION,
+                "name": settings.agent_name,
+                "description": settings.agent_description,
                 "image": "https://github.com/OpenBB-finance/copilot-for-terminal-pro/assets/14093308/7da2a512-93b9-478d-90bc-b8c3dd0cabcf",
                 "endpoints": {"query": "/query"},
                 "features": {
