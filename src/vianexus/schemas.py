@@ -108,7 +108,7 @@ class AdvancedDividends(BaseModel):
     status: str
 
     # Optional fields
-    adr_fee: float | None = Field(alias="adrFee", default=None)
+    adr_fee: int | None = Field(alias="adrFee", default=None)
     amount: float | None = None
     announce_date: str | None = Field(alias="announceDate", default=None)
     country_code: str | None = Field(alias="countryCode", default=None)

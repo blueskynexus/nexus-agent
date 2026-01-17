@@ -10,7 +10,7 @@ from src.vianexus.quote import quote
         "description": "A table widget from an API endpoint",
         "type": "table",
         "endpoint": "table_widget",
-        "refetchInterval": 10_000,
+        "refetchInterval": 5_000,
         "gridData": {"w": 50, "h": 10},
         "raw": True,
         "params": [

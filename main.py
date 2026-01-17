@@ -23,6 +23,7 @@ from src.agent.stream_response import stream_response
 from src.config import settings
 from src.utils.logging import configure_logging
 from src.utils.sse import extract_token, sse_message_chunk
+from src.widgets.dividends_table import dividends_table
 from src.widgets.news import get_news
 from src.widgets.rules import get_rules
 from src.widgets.stock_chart import get_stock_chart
@@ -226,6 +227,7 @@ app.get("/moving_average_crossover")(get_stock_chart)
 app.get("/rules")(get_rules)
 app.get("/vianexus_news")(get_news)
 app.get("/table_widget")(table_widget)
+app.get("/dividends_table")(dividends_table)
 
 
 def run():
